@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Parker's Chronicle</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0F0B08;
+    --panel: #1C160F;
+    --panel-border: #332619;
+    --ink-gold: #D4A017;
+    --ink-gold-soft: rgba(212,160,23,0.16);
+    --ink-teal: #5AAFA6;
+    --debt-red: #C06A50;
+    --debt-red-soft: rgba(192,106,80,0.14);
+    --text-primary: #F0E6D2;
+    --text-muted: #9C9081;
+    --text-faint: #6B6153;
+    --grid-line: rgba(240,230,210,0.07);
+    --radius: 14px;
+  }
+  *{ box-sizing: border-box; }
+  html, body{
+    margin:0; padding:0;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  body{
+    padding: 40px 20px 80px;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(212,160,23,0.08), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(212,160,23,0.04), transparent 60%);
+  }
+  .wrap{ max-width: 880px; margin: 0 auto; }
+
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-gold);
+    margin: 0 0 10px;
+  }
+  h1{
+    font-family: 'Fraunces', serif;
+    font-optical-sizing: auto;
+    font-weight: 600;
+    font-size: clamp(32px, 5vw, 44px);
+    margin: 0 0 6px;
+    letter-spacing: -0.01em;
+  }
+  .sub{
+    color: var(--text-muted);
+    font-size: 14.5px;
+    margin: 0 0 34px;
+    max-width: 46ch;
+    line-height: 1.5;
+  }
+
+  .hero{
+    background: linear-gradient(180deg, var(--panel), #120D08);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 28px 26px 10px;
+    margin-bottom: 22px;
+  }
+  .hero-top{
+    display:flex; justify-content: space-between; align-items: flex-end;
+    flex-wrap: wrap; gap: 16px;
+    margin-bottom: 18px;
+  }
+  .balance-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .balance-figure{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: clamp(40px, 7vw, 58px);
+    line-height: 1;
+    letter-spacing: -0.01em;
+  }
+  .balance-figure.negative{ color: var(--debt-red); }
+  .balance-asof{
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .trend-note{
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-top: 5px;
+  }
+
+  .hero-controls{
+    display:flex; align-items:center; gap: 14px; flex-wrap: wrap;
+  }
+  .currency-field{
+    display:flex; align-items:center; gap: 7px;
+  }
+  .currency-field label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+  }
+  .currency-field input{
+    width: 76px;
+    background: #0B0805;
+    border: 1px solid var(--panel-border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 6px 9px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    outline: none;
+  }
+  .currency-field input:focus{ border-color: var(--ink-gold); }
+
+  .range-tabs{
+    display:flex; gap: 4px;
+    background: #0B0805;
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .range-tabs button{
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 12.5px;
+    font-weight: 500;
+    padding: 7px 13px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .range-tabs button.active{
+    background: var(--ink-gold);
+    color: #1B1502;
+  }
+  .range-tabs button:not(.active):hover{ color: var(--text-primary); }
+
+  .chart-area{ position: relative; margin: 6px -6px 4px; }
+  svg{ width: 100%; height: auto; display:block; overflow: visible; }
+  .zero-line{ stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 5; opacity: 0.45; }
+  .grid-h{ stroke: var(--grid-line); stroke-width: 1; }
+  .ink-glow{ fill:none; stroke: var(--ink-gold); stroke-width: 6; opacity: 0.18; filter: blur(4px); }
+  .ink-line{ fill:none; stroke: var(--ink-gold); stroke-width: 2.4; stroke-linejoin: round; stroke-linecap: round; }
+  .marker-dot{ fill: var(--bg); stroke: var(--ink-gold); stroke-width: 2.2; }
+  .current-dot{ fill: var(--ink-gold); }
+  .current-dot-pulse{
+    fill: none; stroke: var(--ink-gold); stroke-width: 1.5; opacity: 0.7;
+    transform-origin: center;
+    animation: pulse 2.6s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{ r: 5; opacity: 0.55; }
+    100%{ r: 15; opacity: 0; }
+  }
+  .swing-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    fill: var(--text-muted);
+  }
+  .swing-label.peak{ fill: var(--ink-gold); }
+  .swing-label.trough{ fill: var(--debt-red); }
+
+  .empty-chart{
+    padding: 60px 20px 50px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14.5px;
+  }
+  .empty-chart b{ color: var(--text-primary); }
+
+  .stats-grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    background: var(--panel-border);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .stat{
+    background: var(--panel);
+    padding: 16px 16px 15px;
+  }
+  .stat-label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 7px;
+  }
+  .stat-value{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 21px;
+  }
+  .stat-value.gold{ color: var(--ink-gold); }
+  .stat-value.red{ color: var(--debt-red); }
+  .stat-sub{ font-size: 11px; color: var(--text-faint); margin-top: 3px; font-family: 'IBM Plex Mono', monospace; }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    padding: 22px 24px;
+    margin-bottom: 22px;
+  }
+  .panel h2{
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    margin: 0 0 4px;
+  }
+  .panel .hint{ color: var(--text-muted); font-size: 12.5px; margin: 0 0 18px; }
+
+  form{ display:flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+  .field{ display:flex; flex-direction: column; gap: 6px; }
+  .field label{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+  }
+  input[type=date], input[type=number]{
+    background: #0B0805;
+    border: 1px solid var(--panel-border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 9px 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    outline: none;
+  }
+  input[type=date]{ min-width: 150px; }
+  input[type=number]{ width: 140px; }
+  input:focus{ border-color: var(--ink-gold); }
+  button.primary{
+    background: var(--ink-gold);
+    color: #1B1502;
+    border: none;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 13.5px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: filter .15s ease;
+  }
+  button.primary:hover{ filter: brightness(1.08); }
+  .form-note{ font-size: 11.5px; color: var(--text-faint); margin-top: 12px; }
+
+  table{ width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
+  thead th{
+    text-align: left; font-weight: 500; color: var(--text-muted);
+    font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0 10px 10px; border-bottom: 1px solid var(--panel-border);
+  }
+  tbody td{ padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  tbody tr:hover{ background: rgba(255,255,255,0.02); }
+  .delta.up{ color: var(--ink-teal); }
+  .delta.down{ color: var(--debt-red); }
+  .row-remove{
+    background: none; border: none; color: var(--text-faint);
+    cursor: pointer; font-family: 'Inter', sans-serif; font-size: 12px;
+  }
+  .row-remove:hover{ color: var(--debt-red); }
+  .log-scroll{ max-height: 320px; overflow-y: auto; margin-top: 4px; }
+
+  footer{ text-align:center; color: var(--text-faint); font-size: 11.5px; margin-top: 30px; font-family: 'IBM Plex Mono', monospace; }
+
+  @media (max-width: 520px){
+    input[type=number]{ width: 110px; }
+    .balance-figure{ font-size: 38px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">PERSONAL CHRONICLE</div>
+  <h1>Parker's Chronicle</h1>
+  <p class="sub">Every number here is a day you showed up. Log what's free and clear, and let the story build itself, one entry at a time.</p>
+
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="balance-label">Current balance</div>
+        <div class="balance-figure" id="currentBalance">—</div>
+        <div class="balance-asof" id="currentAsOf"></div>
+        <div class="trend-note" id="trendNote"></div>
+      </div>
+      <div class="hero-controls">
+        <div class="currency-field">
+          <label for="currencyInput">Unit</label>
+          <input type="text" id="currencyInput" placeholder="$ · € · GH₵" maxlength="6">
+        </div>
+        <div class="range-tabs" id="rangeTabs">
+          <button data-range="30d">30d</button>
+          <button data-range="90d">90d</button>
+          <button data-range="1y">1y</button>
+          <button data-range="all" class="active">All</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-area" id="chartArea"></div>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"></div>
+
+  <div class="panel">
+    <h2>Log today's number</h2>
+    <p class="hint">Whatever's free and clear right now — not bill money, not data or food money. One entry per day; logging the same date again just updates it.</p>
+    <form id="entryForm">
+      <div class="field">
+        <label for="entryDate">Date</label>
+        <input type="date" id="entryDate" required>
+      </div>
+      <div class="field">
+        <label for="entryAmount">Balance</label>
+        <input type="number" id="entryAmount" step="any" placeholder="e.g. -15 or 30" required>
+      </div>
+      <button type="submit" class="primary">Log it</button>
+    </form>
+    <p class="form-note">Negative numbers are fair game — that's you tracking a hole you're climbing out of, not a rule you broke.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Full log</h2>
+    <p class="hint">Most recent first. Remove an entry if you fat-fingered it.</p>
+    <div class="log-scroll">
+      <table>
+        <thead><tr><th>Date</th><th>Balance</th><th>Change</th><th></th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>Stored on this device only — nobody else sees this but you.</footer>
+</div>
+
+<script>
+const STORAGE_KEY = 'ledger:entries';
+const CURRENCY_KEY = 'ledger:currency';
+let entries = [];
+let currentRange = 'all';
+let currencySymbol = '';
+
+function formatDate(dateStr, short){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const dt = new Date(y, m-1, d);
+  return dt.toLocaleDateString('en-US', short ? {month:'short', day:'numeric'} : {month:'short', day:'numeric', year:'numeric'});
+}
+
+async function loadCurrency(){
+  try{
+    const res = await window.storage.get(CURRENCY_KEY, false);
+    currencySymbol = res && res.value ? res.value : '';
+  }catch(e){
+    currencySymbol = '';
+  }
+  document.getElementById('currencyInput').value = currencySymbol;
+}
+
+async function saveCurrency(val){
+  currencySymbol = val;
+  try{
+    await window.storage.set(CURRENCY_KEY, val, false);
+  }catch(e){
+    console.error('Could not save currency unit', e);
+  }
+  render();
+}
+
+async function loadEntries(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    entries = res && res.value ? JSON.parse(res.value) : [];
+  }catch(e){
+    entries = [];
+  }
+  entries.sort((a,b)=> a.date.localeCompare(b.date));
+  render();
+}
+
+async function saveEntries(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
+  }catch(e){
+    console.error('Could not save ledger entry', e);
+  }
+}
+
+function upsertEntry(date, amount){
+  const idx = entries.findIndex(e=>e.date===date);
+  if(idx>=0) entries[idx].amount = amount;
+  else entries.push({date, amount});
+  entries.sort((a,b)=> a.date.localeCompare(b.date));
+  saveEntries();
+  render();
+}
+
+function deleteEntry(date){
+  entries = entries.filter(e=>e.date!==date);
+  saveEntries();
+  render();
+}
+
+function fmt(n){
+  const sign = n < 0 ? '-' : '';
+  const abs = Math.abs(n);
+  const str = abs.toLocaleString(undefined, {maximumFractionDigits:2});
+  return sign + currencySymbol + str;
+}
+
+function filteredEntries(){
+  if(entries.length===0) return [];
+  if(currentRange==='all') return entries;
+  const last = new Date(entries[entries.length-1].date);
+  let days = 30;
+  if(currentRange==='90d') days = 90;
+  if(currentRange==='1y') days = 365;
+  const cutoff = new Date(last);
+  cutoff.setDate(cutoff.getDate()-days);
+  return entries.filter(e=> new Date(e.date) >= cutoff);
+}
+
+function computeStreaks(list){
+  let bestUp=0,curUp=0,bestDown=0,curDown=0;
+  for(let i=1;i<list.length;i++){
+    const diff = list[i].amount - list[i-1].amount;
+    if(diff>0){ curUp++; curDown=0; }
+    else if(diff<0){ curDown++; curUp=0; }
+    else { curUp=0; curDown=0; }
+    bestUp = Math.max(bestUp,curUp);
+    bestDown = Math.max(bestDown,curDown);
+  }
+  return {bestUp, bestDown};
+}
+
+function renderStats(list){
+  const grid = document.getElementById('statsGrid');
+  if(list.length===0){ grid.innerHTML=''; return; }
+  const values = list.map(e=>e.amount);
+  const avg = values.reduce((a,b)=>a+b,0)/values.length;
+  const peak = list.reduce((a,b)=> b.amount>a.amount?b:a, list[0]);
+  const trough = list.reduce((a,b)=> b.amount<a.amount?b:a, list[0]);
+  const {bestUp,bestDown} = computeStreaks(list);
+  const spanDays = Math.round((new Date(list[list.length-1].date)-new Date(list[0].date))/86400000)+1;
+
+  grid.innerHTML = `
+    <div class="stat">
+      <div class="stat-label">Peak</div>
+      <div class="stat-value gold">${fmt(peak.amount)}</div>
+      <div class="stat-sub">${formatDate(peak.date)}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Deepest</div>
+      <div class="stat-value ${trough.amount<0?'red':''}">${fmt(trough.amount)}</div>
+      <div class="stat-sub">${formatDate(trough.date)}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Average</div>
+      <div class="stat-value">${fmt(avg)}</div>
+      <div class="stat-sub">${list.length} entries</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Longest climb</div>
+      <div class="stat-value">${bestUp}</div>
+      <div class="stat-sub">entries in a row</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Longest slide</div>
+      <div class="stat-value">${bestDown}</div>
+      <div class="stat-sub">entries in a row</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Span</div>
+      <div class="stat-value">${spanDays}d</div>
+      <div class="stat-sub">first to last log</div>
+    </div>
+  `;
+}
+
+function renderChart(list){
+  const area = document.getElementById('chartArea');
+  if(list.length===0){
+    area.innerHTML = `<div class="empty-chart">Your chronicle is empty — <b>log today's balance</b> below to start the line.</div>`;
+    return;
+  }
+  if(list.length===1){
+    area.innerHTML = `<div class="empty-chart">One entry logged at <b>${fmt(list[0].amount)}</b>. Log a second day and the line begins.</div>`;
+    return;
+  }
+
+  const w = 900, h = 300, padX = 36, padY = 34;
+  const values = list.map(e=>e.amount);
+  let min = Math.min(...values, 0), max = Math.max(...values, 0);
+  if(min===max){ min-=10; max+=10; }
+  const range = max-min;
+  const pad = range*0.14 || 10;
+  min -= pad; max += pad;
+  const n = list.length;
+  const xStep = (w-2*padX)/(n-1);
+  const yOf = v => h-padY - ((v-min)/(max-min))*(h-2*padY);
+  const pts = list.map((e,i)=>({x: padX+i*xStep, y: yOf(e.amount), date:e.date, amount:e.amount}));
+
+  function smoothPath(p){
+    if(p.length<2) return `M${p[0].x},${p[0].y}`;
+    let d = `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)}`;
+    for(let i=0;i<p.length-1;i++){
+      const p0 = p[i-1] || p[i];
+      const p1 = p[i];
+      const p2 = p[i+1];
+      const p3 = p[i+2] || p2;
+      const cp1x = p1.x + (p2.x-p0.x)/6, cp1y = p1.y + (p2.y-p0.y)/6;
+      const cp2x = p2.x - (p3.x-p1.x)/6, cp2y = p2.y - (p3.y-p1.y)/6;
+      d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+    }
+    return d;
+  }
+
+  const linePath = smoothPath(pts);
+  const zeroY = yOf(0).toFixed(1);
+
+  const gridLines = [0.25,0.5,0.75].map(f=>{
+    const y = (padY + f*(h-2*padY)).toFixed(1);
+    return `<line class="grid-h" x1="${padX}" y1="${y}" x2="${w-padX}" y2="${y}"/>`;
+  }).join('');
+
+  const peak = list.reduce((a,b)=> b.amount>a.amount?b:a, list[0]);
+  const trough = list.reduce((a,b)=> b.amount<a.amount?b:a, list[0]);
+  const peakPt = pts[list.indexOf(peak)];
+  const troughPt = pts[list.indexOf(trough)];
+  const last = pts[pts.length-1];
+
+  let markers = '';
+  if(peak !== list[list.length-1]){
+    markers += `<circle class="marker-dot" cx="${peakPt.x}" cy="${peakPt.y}" r="3.5"/>
+      <text class="swing-label peak" x="${peakPt.x}" y="${peakPt.y-10}" text-anchor="middle">${formatDate(peak.date, true)}</text>`;
+  }
+  if(trough !== list[list.length-1] && trough !== peak){
+    markers += `<circle class="marker-dot" cx="${troughPt.x}" cy="${troughPt.y}" r="3.5"/>
+      <text class="swing-label trough" x="${troughPt.x}" y="${troughPt.y+18}" text-anchor="middle">${formatDate(trough.date, true)}</text>`;
+  }
+
+  area.innerHTML = `
+  <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    ${gridLines}
+    <line class="zero-line" x1="${padX}" y1="${zeroY}" x2="${w-padX}" y2="${zeroY}"/>
+    <path class="ink-glow" d="${linePath}"/>
+    <path class="ink-line" d="${linePath}"/>
+    ${markers}
+    <circle class="current-dot-pulse" cx="${last.x}" cy="${last.y}" r="5"/>
+    <circle class="current-dot" cx="${last.x}" cy="${last.y}" r="4"/>
+  </svg>`;
+}
+
+function renderLog(){
+  const body = document.getElementById('logBody');
+  const rev = [...entries].reverse();
+  body.innerHTML = rev.map((e,i)=>{
+    const idxInSorted = entries.length-1-i;
+    const prev = idxInSorted>0 ? entries[idxInSorted-1].amount : null;
+    let deltaHtml = '<span style="color:var(--text-faint)">—</span>';
+    if(prev !== null){
+      const d = e.amount - prev;
+      const cls = d>0?'up':(d<0?'down':'');
+      deltaHtml = `<span class="delta ${cls}">${d>0?'+':''}${fmt(d)}</span>`;
+    }
+    return `<tr>
+      <td>${formatDate(e.date)}</td>
+      <td>${fmt(e.amount)}</td>
+      <td>${deltaHtml}</td>
+      <td><button class="row-remove" onclick="deleteEntry('${e.date}')">Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function trendNote(){
+  if(entries.length===0) return '';
+  if(entries.length===1) return 'First mark on the page. It starts here.';
+  const last = entries[entries.length-1].amount;
+  const prev = entries[entries.length-2].amount;
+  const diff = last - prev;
+  if(diff > 0) return `Up ${fmt(Math.abs(diff))} from last time.`;
+  if(diff < 0) return `Down ${fmt(Math.abs(diff))} from last time — part of the shape of things.`;
+  return 'Holding steady since last time.';
+}
+
+function render(){
+  const list = filteredEntries();
+  const last = entries[entries.length-1];
+  const balEl = document.getElementById('currentBalance');
+  const asOfEl = document.getElementById('currentAsOf');
+  const trendEl = document.getElementById('trendNote');
+  if(last){
+    balEl.textContent = fmt(last.amount);
+    balEl.className = 'balance-figure' + (last.amount<0 ? ' negative' : '');
+    asOfEl.textContent = 'as of ' + formatDate(last.date);
+    trendEl.textContent = trendNote();
+  }else{
+    balEl.textContent = '—';
+    balEl.className = 'balance-figure';
+    asOfEl.textContent = 'nothing logged yet';
+    trendEl.textContent = '';
+  }
+  renderChart(list);
+  renderStats(list);
+  renderLog();
+}
+
+document.getElementById('entryForm').addEventListener('submit', (e)=>{
+  e.preventDefault();
+  const date = document.getElementById('entryDate').value;
+  const amount = parseFloat(document.getElementById('entryAmount').value);
+  if(!date || isNaN(amount)) return;
+  upsertEntry(date, amount);
+  document.getElementById('entryAmount').value = '';
+});
+
+document.getElementById('rangeTabs').addEventListener('click', (e)=>{
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  currentRange = btn.dataset.range;
+  [...document.querySelectorAll('.range-tabs button')].forEach(b=>b.classList.toggle('active', b===btn));
+  render();
+});
+
+document.getElementById('currencyInput').addEventListener('change', (e)=>{
+  saveCurrency(e.target.value.trim());
+});
+
+document.getElementById('entryDate').valueAsDate = new Date();
+
+loadCurrency();
+loadEntries();
+</script>
+</body>
+</html>
