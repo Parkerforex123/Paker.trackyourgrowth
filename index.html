@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Parker's Chronicle</title>
+<title>Personal Financial Market Charts — Parker's Chronicles</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -265,6 +265,17 @@
   }
   button.primary:hover{ filter: brightness(1.08); }
   .form-note{ font-size: 11.5px; color: var(--text-faint); margin-top: 12px; }
+  .lock-panel{ display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; background:var(--panel); border:1px solid var(--panel-border); border-radius:var(--radius); padding:14px 18px; margin-bottom:22px; }
+  .lock-title{ font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-gold); }
+  .lock-sub{ color:var(--text-muted); font-size:12.5px; margin-top:4px; }
+  .lock-actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .lock-input{ width:120px; background:#0B0805; border:1px solid var(--panel-border); color:var(--text-primary); border-radius:8px; padding:8px 10px; font-family:'IBM Plex Mono',monospace; font-size:13px; outline:none; }
+  .lock-input:focus{ border-color:var(--ink-gold); }
+  .secondary-btn{ background:#0B0805; border:1px solid var(--panel-border); color:var(--text-primary); font-family:'Inter',sans-serif; font-weight:600; font-size:13px; padding:9px 14px; border-radius:8px; cursor:pointer; }
+  .secondary-btn:hover{ border-color:var(--ink-gold); }
+  .locked-form{ opacity:.55; }
+  .locked-form input, .locked-form button{ pointer-events:none; }
+
 
   table{ width: 100%; border-collapse: collapse; font-family: 'IBM Plex Mono', monospace; font-size: 13px; }
   thead th{
@@ -289,23 +300,35 @@
     input[type=number]{ width: 110px; }
     .balance-figure{ font-size: 38px; }
   }
+
+  .mini-metrics{display:flex;gap:12px;align-items:center;margin-right:2px;}
+  .mini-metric{display:flex;flex-direction:column;gap:2px;min-width:74px;}
+  .mini-metric span{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);}
+  .mini-metric b{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text-primary);}
+  .mini-metric b.mini-debt{color:var(--debt-red);}
+  .net-preview-field{min-width:140px;}
+  .net-preview{background:#0B0805;border:1px solid var(--panel-border);border-radius:8px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:14px;min-height:39px;color:var(--ink-gold);display:flex;align-items:center;}
+  .net-preview.negative{color:var(--debt-red);}
+  @media(max-width:700px){.mini-metrics{width:100%;margin-bottom:2px;}.hero-controls{align-items:flex-start;}.net-preview-field{min-width:110px;}}
+
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="eyebrow">PERSONAL CHRONICLE</div>
-  <h1>Parker's Chronicle</h1>
-  <p class="sub">Every number here is a day you showed up. Log what's free and clear, and let the story build itself, one entry at a time.</p>
+  <div class="eyebrow">PERSONAL FINANCIAL MARKET CHARTS</div>
+  <h1>Parker's Chronicles</h1>
+  <p class="sub">A simple financial history. Record what is genuinely free, record what you owe, and let the line show where you are going.</p>
 
   <div class="hero">
     <div class="hero-top">
       <div>
-        <div class="balance-label">Current balance</div>
+        <div class="balance-label">Net position</div>
         <div class="balance-figure" id="currentBalance">—</div>
         <div class="balance-asof" id="currentAsOf"></div>
         <div class="trend-note" id="trendNote"></div>
       </div>
       <div class="hero-controls">
+        <div class="mini-metrics" id="miniMetrics"></div>
         <div class="currency-field">
           <label for="currencyInput">Unit</label>
           <input type="text" id="currencyInput" placeholder="$ · € · GH₵" maxlength="6">
@@ -321,23 +344,39 @@
     <div class="chart-area" id="chartArea"></div>
   </div>
 
+  <div class="lock-panel" id="lockPanel">
+    <div>
+      <div class="lock-title" id="lockTitle">Editing locked</div>
+      <div class="lock-sub" id="lockSub">Unlock the tracker to add or edit history.</div>
+    </div>
+    <div class="lock-actions" id="lockActions"></div>
+  </div>
+
   <div class="stats-grid" id="statsGrid"></div>
 
   <div class="panel">
-    <h2>Log today's number</h2>
-    <p class="hint">Whatever's free and clear right now — not bill money, not data or food money. One entry per day; logging the same date again just updates it.</p>
-    <form id="entryForm">
+    <h2>Log a snapshot</h2>
+    <p class="hint">Record the money that is genuinely free to you and the debt you owe. The dashboard calculates your net position automatically.</p>
+    <form id="entryForm" class="locked-form">
       <div class="field">
         <label for="entryDate">Date</label>
         <input type="date" id="entryDate" required>
       </div>
       <div class="field">
-        <label for="entryAmount">Balance</label>
-        <input type="number" id="entryAmount" step="any" placeholder="e.g. -15 or 30" required>
+        <label for="entryFreeCash">Free cash</label>
+        <input type="number" id="entryFreeCash" min="0" step="any" placeholder="e.g. 300" required>
       </div>
-      <button type="submit" class="primary">Log it</button>
+      <div class="field">
+        <label for="entryDebt">Debt</label>
+        <input type="number" id="entryDebt" min="0" step="any" placeholder="e.g. 0" value="0" required>
+      </div>
+      <div class="field net-preview-field">
+        <label>Net position</label>
+        <div class="net-preview" id="netPreview">—</div>
+      </div>
+      <button type="submit" class="primary">Save snapshot</button>
     </form>
-    <p class="form-note">Negative numbers are fair game — that's you tracking a hole you're climbing out of, not a rule you broke.</p>
+    <p class="form-note">You do not need to log every transaction. A snapshot is simply: “As of this date, this is what I genuinely have available, and this is what I owe.”</p>
   </div>
 
   <div class="panel">
@@ -345,7 +384,7 @@
     <p class="hint">Most recent first. Remove an entry if you fat-fingered it.</p>
     <div class="log-scroll">
       <table>
-        <thead><tr><th>Date</th><th>Balance</th><th>Change</th><th></th></tr></thead>
+        <thead><tr><th>Date</th><th>Free cash</th><th>Debt</th><th>Net position</th><th>Change</th><th></th></tr></thead>
         <tbody id="logBody"></tbody>
       </table>
     </div>
@@ -355,11 +394,18 @@
 </div>
 
 <script>
-const STORAGE_KEY = 'ledger:entries';
-const CURRENCY_KEY = 'ledger:currency';
+const STORAGE_KEY = 'chronicle:entries:v3';
+const LEGACY_STORAGE_KEY = 'ledger:entries:v2';
+const OLDER_STORAGE_KEY = 'ledger:entries';
+const CURRENCY_KEY = 'chronicle:currency:v2';
+const LOCK_KEY = 'chronicle:lock:v1';
+const DEFAULT_CODE = '2468';
 let entries = [];
 let currentRange = 'all';
 let currencySymbol = '';
+let editUnlocked = false;
+let passcodeHash = null;
+let storageReady = false;
 
 function formatDate(dateStr, short){
   const [y,m,d] = dateStr.split('-').map(Number);
@@ -367,289 +413,329 @@ function formatDate(dateStr, short){
   return dt.toLocaleDateString('en-US', short ? {month:'short', day:'numeric'} : {month:'short', day:'numeric', year:'numeric'});
 }
 
-async function loadCurrency(){
-  try{
-    const res = await window.storage.get(CURRENCY_KEY, false);
-    currencySymbol = res && res.value ? res.value : '';
-  }catch(e){
-    currencySymbol = '';
+function safeNum(v){
+  const n = Number(v);
+  return Number.isFinite(n) ? Math.max(0,n) : 0;
+}
+
+function normalizeEntry(e){
+  if(!e || !e.date) return null;
+  if(Object.prototype.hasOwnProperty.call(e,'freeCash') || Object.prototype.hasOwnProperty.call(e,'debt')){
+    const freeCash = safeNum(e.freeCash);
+    const debt = safeNum(e.debt);
+    return {date:e.date, freeCash, debt, net:freeCash-debt};
   }
-  document.getElementById('currencyInput').value = currencySymbol;
+  const amount = Number(e.amount);
+  if(!Number.isFinite(amount)) return null;
+  return {date:e.date, freeCash:amount>=0?amount:0, debt:amount<0?Math.abs(amount):0, net:amount};
+}
+
+function simpleHash(text){
+  let h=2166136261;
+  for(let i=0;i<text.length;i++){ h ^= text.charCodeAt(i); h=Math.imul(h,16777619); }
+  return (h>>>0).toString(16).padStart(8,'0');
+}
+
+async function hashCode(code){
+  try{
+    if(window.crypto && crypto.subtle && window.TextEncoder){
+      const data=new TextEncoder().encode(code);
+      const buf=await crypto.subtle.digest('SHA-256',data);
+      return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+  }catch(e){}
+  return simpleHash(code);
+}
+
+function localGet(key){
+  try { return window.localStorage.getItem(key); } catch(e){ return null; }
+}
+function localSet(key,value){
+  try { window.localStorage.setItem(key,value); return true; } catch(e){ return false; }
+}
+function localRemove(key){
+  try { window.localStorage.removeItem(key); return true; } catch(e){ return false; }
+}
+
+async function storageGet(key){
+  const local = localGet(key);
+  if(local !== null) return local;
+  try{
+    if(window.storage && typeof window.storage.get==='function'){
+      const res=await window.storage.get(key,false);
+      return res && res.value ? res.value : null;
+    }
+  }catch(e){}
+  return null;
+}
+
+async function storageSet(key,value){
+  const localSaved=localSet(key,value);
+  try{
+    if(window.storage && typeof window.storage.set==='function') await window.storage.set(key,value,false);
+  }catch(e){}
+  return localSaved;
+}
+
+async function loadLock(){
+  let raw=await storageGet(LOCK_KEY);
+  if(!raw){
+    passcodeHash=await hashCode(DEFAULT_CODE);
+    await storageSet(LOCK_KEY,JSON.stringify({hash:passcodeHash}));
+  }else{
+    try{ const obj=JSON.parse(raw); passcodeHash=obj.hash || await hashCode(DEFAULT_CODE); }
+    catch(e){ passcodeHash=await hashCode(DEFAULT_CODE); }
+  }
+  editUnlocked=false;
+  renderLock();
+}
+
+async function unlock(){
+  const input=document.getElementById('unlockCode');
+  if(!input) return;
+  const code=input.value;
+  if(!code) return;
+  const hash=await hashCode(code);
+  if(hash===passcodeHash){
+    editUnlocked=true;
+    input.value='';
+    renderLock();
+    render();
+  }else{
+    input.value='';
+    input.placeholder='Wrong code';
+    setTimeout(()=>{ if(document.getElementById('unlockCode')) document.getElementById('unlockCode').placeholder='Unlock code'; },1200);
+  }
+}
+
+function lock(){
+  editUnlocked=false;
+  renderLock();
+  render();
+}
+
+async function changeCode(){
+  if(!editUnlocked) return;
+  const oldCode=prompt('Enter current code:');
+  if(oldCode===null) return;
+  if((await hashCode(oldCode))!==passcodeHash){ alert('Current code is incorrect.'); return; }
+  const newCode=prompt('Enter new code:');
+  if(newCode===null || !newCode.trim()) return;
+  passcodeHash=await hashCode(newCode.trim());
+  await storageSet(LOCK_KEY,JSON.stringify({hash:passcodeHash}));
+  alert('Unlock code changed.');
+}
+
+function renderLock(){
+  const title=document.getElementById('lockTitle');
+  const sub=document.getElementById('lockSub');
+  const actions=document.getElementById('lockActions');
+  const form=document.getElementById('entryForm');
+  const currency=document.getElementById('currencyInput');
+  if(!title || !sub || !actions) return;
+  if(editUnlocked){
+    title.textContent='Editing unlocked';
+    sub.textContent='You can add, edit, remove, or change the unlock code.';
+    actions.innerHTML='<button type="button" class="secondary-btn" id="changeCodeBtn">Change code</button><button type="button" class="secondary-btn" id="lockBtn">Lock</button>';
+    if(form) form.classList.remove('locked-form');
+    if(currency) currency.disabled=false;
+    document.getElementById('changeCodeBtn').onclick=changeCode;
+    document.getElementById('lockBtn').onclick=lock;
+  }else{
+    title.textContent='Editing locked';
+    sub.textContent='Historical data remains visible, but editing is locked.';
+    actions.innerHTML='<input class="lock-input" id="unlockCode" type="password" inputmode="numeric" maxlength="32" placeholder="Unlock code" autocomplete="off"><button type="button" class="secondary-btn" id="unlockBtn">Unlock</button>';
+    if(form) form.classList.add('locked-form');
+    if(currency) currency.disabled=true;
+    document.getElementById('unlockBtn').onclick=unlock;
+    document.getElementById('unlockCode').addEventListener('keydown',e=>{ if(e.key==='Enter') unlock(); });
+  }
+}
+
+async function loadCurrency(){
+  currencySymbol=(await storageGet(CURRENCY_KEY)) || '';
+  document.getElementById('currencyInput').value=currencySymbol;
 }
 
 async function saveCurrency(val){
-  currencySymbol = val;
-  try{
-    await window.storage.set(CURRENCY_KEY, val, false);
-  }catch(e){
-    console.error('Could not save currency unit', e);
-  }
+  if(!editUnlocked) return;
+  currencySymbol=val;
+  await storageSet(CURRENCY_KEY,val);
   render();
 }
 
 async function loadEntries(){
+  let raw=[];
   try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    entries = res && res.value ? JSON.parse(res.value) : [];
-  }catch(e){
-    entries = [];
-  }
-  entries.sort((a,b)=> a.date.localeCompare(b.date));
+    const primary=await storageGet(STORAGE_KEY);
+    if(primary) raw=JSON.parse(primary);
+    if(!raw.length){
+      const legacy=await storageGet(LEGACY_STORAGE_KEY);
+      if(legacy) raw=JSON.parse(legacy);
+    }
+    if(!raw.length){
+      const older=await storageGet(OLDER_STORAGE_KEY);
+      if(older) raw=JSON.parse(older);
+    }
+  }catch(e){ raw=[]; }
+  entries=Array.isArray(raw)?raw.map(normalizeEntry).filter(Boolean):[];
+  const byDate={};
+  for(const e of entries) byDate[e.date]=e;
+  entries=Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date));
+  await saveEntries();
+  storageReady=true;
   render();
 }
 
 async function saveEntries(){
-  try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
-  }catch(e){
-    console.error('Could not save ledger entry', e);
+  const payload=JSON.stringify(entries);
+  const ok=await storageSet(STORAGE_KEY,payload);
+  const status=document.getElementById('saveStatus');
+  if(status){
+    status.textContent=ok?'Saved on this device':'Save failed';
+    status.className=ok?'save-status saved':'save-status failed';
   }
 }
 
-function upsertEntry(date, amount){
-  const idx = entries.findIndex(e=>e.date===date);
-  if(idx>=0) entries[idx].amount = amount;
-  else entries.push({date, amount});
-  entries.sort((a,b)=> a.date.localeCompare(b.date));
+function upsertEntry(date,freeCash,debt){
+  if(!editUnlocked) return;
+  const entry={date,freeCash:safeNum(freeCash),debt:safeNum(debt)};
+  entry.net=entry.freeCash-entry.debt;
+  const idx=entries.findIndex(e=>e.date===date);
+  if(idx>=0) entries[idx]=entry; else entries.push(entry);
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
   saveEntries();
   render();
 }
 
 function deleteEntry(date){
-  entries = entries.filter(e=>e.date!==date);
+  if(!editUnlocked) return;
+  if(!confirm('Remove this snapshot?')) return;
+  entries=entries.filter(e=>e.date!==date);
   saveEntries();
   render();
 }
 
 function fmt(n){
-  const sign = n < 0 ? '-' : '';
-  const abs = Math.abs(n);
-  const str = abs.toLocaleString(undefined, {maximumFractionDigits:2});
-  return sign + currencySymbol + str;
+  const sign=n<0?'-':'';
+  const abs=Math.abs(n);
+  return sign+currencySymbol+abs.toLocaleString(undefined,{maximumFractionDigits:2});
 }
 
 function filteredEntries(){
-  if(entries.length===0) return [];
+  if(!entries.length) return [];
   if(currentRange==='all') return entries;
-  const last = new Date(entries[entries.length-1].date);
-  let days = 30;
-  if(currentRange==='90d') days = 90;
-  if(currentRange==='1y') days = 365;
-  const cutoff = new Date(last);
+  const lastDate=new Date(entries[entries.length-1].date);
+  let days=30;
+  if(currentRange==='90d') days=90;
+  if(currentRange==='1y') days=365;
+  const cutoff=new Date(lastDate);
   cutoff.setDate(cutoff.getDate()-days);
-  return entries.filter(e=> new Date(e.date) >= cutoff);
+  return entries.filter(e=>new Date(e.date)>=cutoff);
 }
 
-function computeStreaks(list){
-  let bestUp=0,curUp=0,bestDown=0,curDown=0;
-  for(let i=1;i<list.length;i++){
-    const diff = list[i].amount - list[i-1].amount;
-    if(diff>0){ curUp++; curDown=0; }
-    else if(diff<0){ curDown++; curUp=0; }
-    else { curUp=0; curDown=0; }
-    bestUp = Math.max(bestUp,curUp);
-    bestDown = Math.max(bestDown,curDown);
-  }
-  return {bestUp, bestDown};
+function maxDrawdown(list){
+  if(!list.length) return 0;
+  let peak=list[0].net,worst=0;
+  for(const e of list){ peak=Math.max(peak,e.net); worst=Math.max(worst,peak-e.net); }
+  return worst;
 }
 
 function renderStats(list){
-  const grid = document.getElementById('statsGrid');
-  if(list.length===0){ grid.innerHTML=''; return; }
-  const values = list.map(e=>e.amount);
-  const avg = values.reduce((a,b)=>a+b,0)/values.length;
-  const peak = list.reduce((a,b)=> b.amount>a.amount?b:a, list[0]);
-  const trough = list.reduce((a,b)=> b.amount<a.amount?b:a, list[0]);
-  const {bestUp,bestDown} = computeStreaks(list);
-  const spanDays = Math.round((new Date(list[list.length-1].date)-new Date(list[0].date))/86400000)+1;
+  const grid=document.getElementById('statsGrid');
+  if(!list.length){ grid.innerHTML=''; return; }
+  const peak=list.reduce((a,b)=>b.net>a.net?b:a,list[0]);
+  const trough=list.reduce((a,b)=>b.net<a.net?b:a,list[0]);
+  const first=list[0], last=list[list.length-1], change=last.net-first.net;
+  const drawdown=maxDrawdown(list);
+  const spanDays=Math.round((new Date(last.date)-new Date(first.date))/86400000)+1;
+  grid.innerHTML=`
+    <div class="stat"><div class="stat-label">All-time high</div><div class="stat-value gold">${fmt(peak.net)}</div><div class="stat-sub">${formatDate(peak.date)}</div></div>
+    <div class="stat"><div class="stat-label">All-time low</div><div class="stat-value ${trough.net<0?'red':''}">${fmt(trough.net)}</div><div class="stat-sub">${formatDate(trough.date)}</div></div>
+    <div class="stat"><div class="stat-label">Change</div><div class="stat-value ${change<0?'red':'gold'}">${fmt(change)}</div><div class="stat-sub">since first entry</div></div>
+    <div class="stat"><div class="stat-label">Max drawdown</div><div class="stat-value red">${fmt(-drawdown)}</div><div class="stat-sub">peak to trough</div></div>
+    <div class="stat"><div class="stat-label">Snapshots</div><div class="stat-value">${list.length}</div><div class="stat-sub">in this view</div></div>
+    <div class="stat"><div class="stat-label">Span</div><div class="stat-value">${spanDays}d</div><div class="stat-sub">first to last log</div></div>`;
+}
 
-  grid.innerHTML = `
-    <div class="stat">
-      <div class="stat-label">Peak</div>
-      <div class="stat-value gold">${fmt(peak.amount)}</div>
-      <div class="stat-sub">${formatDate(peak.date)}</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Deepest</div>
-      <div class="stat-value ${trough.amount<0?'red':''}">${fmt(trough.amount)}</div>
-      <div class="stat-sub">${formatDate(trough.date)}</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Average</div>
-      <div class="stat-value">${fmt(avg)}</div>
-      <div class="stat-sub">${list.length} entries</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Longest climb</div>
-      <div class="stat-value">${bestUp}</div>
-      <div class="stat-sub">entries in a row</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Longest slide</div>
-      <div class="stat-value">${bestDown}</div>
-      <div class="stat-sub">entries in a row</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Span</div>
-      <div class="stat-value">${spanDays}d</div>
-      <div class="stat-sub">first to last log</div>
-    </div>
-  `;
+function renderMiniMetrics(){
+  const wrap=document.getElementById('miniMetrics'), last=entries[entries.length-1];
+  if(!wrap) return;
+  if(!last){wrap.innerHTML='';return;}
+  wrap.innerHTML=`<div class="mini-metric"><span>Free</span><b>${fmt(last.freeCash)}</b></div><div class="mini-metric"><span>Debt</span><b class="${last.debt>0?'mini-debt':''}">${fmt(last.debt)}</b></div>`;
 }
 
 function renderChart(list){
-  const area = document.getElementById('chartArea');
-  if(list.length===0){
-    area.innerHTML = `<div class="empty-chart">Your chronicle is empty — <b>log today's balance</b> below to start the line.</div>`;
-    return;
-  }
-  if(list.length===1){
-    area.innerHTML = `<div class="empty-chart">One entry logged at <b>${fmt(list[0].amount)}</b>. Log a second day and the line begins.</div>`;
-    return;
-  }
-
-  const w = 900, h = 300, padX = 36, padY = 34;
-  const values = list.map(e=>e.amount);
-  let min = Math.min(...values, 0), max = Math.max(...values, 0);
-  if(min===max){ min-=10; max+=10; }
-  const range = max-min;
-  const pad = range*0.14 || 10;
-  min -= pad; max += pad;
-  const n = list.length;
-  const xStep = (w-2*padX)/(n-1);
-  const yOf = v => h-padY - ((v-min)/(max-min))*(h-2*padY);
-  const pts = list.map((e,i)=>({x: padX+i*xStep, y: yOf(e.amount), date:e.date, amount:e.amount}));
-
-  function smoothPath(p){
-    if(p.length<2) return `M${p[0].x},${p[0].y}`;
-    let d = `M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)}`;
-    for(let i=0;i<p.length-1;i++){
-      const p0 = p[i-1] || p[i];
-      const p1 = p[i];
-      const p2 = p[i+1];
-      const p3 = p[i+2] || p2;
-      const cp1x = p1.x + (p2.x-p0.x)/6, cp1y = p1.y + (p2.y-p0.y)/6;
-      const cp2x = p2.x - (p3.x-p1.x)/6, cp2y = p2.y - (p3.y-p1.y)/6;
-      d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
-    }
-    return d;
-  }
-
-  const linePath = smoothPath(pts);
-  const zeroY = yOf(0).toFixed(1);
-
-  const gridLines = [0.25,0.5,0.75].map(f=>{
-    const y = (padY + f*(h-2*padY)).toFixed(1);
-    return `<line class="grid-h" x1="${padX}" y1="${y}" x2="${w-padX}" y2="${y}"/>`;
-  }).join('');
-
-  const peak = list.reduce((a,b)=> b.amount>a.amount?b:a, list[0]);
-  const trough = list.reduce((a,b)=> b.amount<a.amount?b:a, list[0]);
-  const peakPt = pts[list.indexOf(peak)];
-  const troughPt = pts[list.indexOf(trough)];
-  const last = pts[pts.length-1];
-
-  let markers = '';
-  if(peak !== list[list.length-1]){
-    markers += `<circle class="marker-dot" cx="${peakPt.x}" cy="${peakPt.y}" r="3.5"/>
-      <text class="swing-label peak" x="${peakPt.x}" y="${peakPt.y-10}" text-anchor="middle">${formatDate(peak.date, true)}</text>`;
-  }
-  if(trough !== list[list.length-1] && trough !== peak){
-    markers += `<circle class="marker-dot" cx="${troughPt.x}" cy="${troughPt.y}" r="3.5"/>
-      <text class="swing-label trough" x="${troughPt.x}" y="${troughPt.y+18}" text-anchor="middle">${formatDate(trough.date, true)}</text>`;
-  }
-
-  area.innerHTML = `
-  <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-    ${gridLines}
-    <line class="zero-line" x1="${padX}" y1="${zeroY}" x2="${w-padX}" y2="${zeroY}"/>
-    <path class="ink-glow" d="${linePath}"/>
-    <path class="ink-line" d="${linePath}"/>
-    ${markers}
-    <circle class="current-dot-pulse" cx="${last.x}" cy="${last.y}" r="5"/>
-    <circle class="current-dot" cx="${last.x}" cy="${last.y}" r="4"/>
-  </svg>`;
+  const area=document.getElementById('chartArea');
+  if(!list.length){area.innerHTML='<div class="empty-chart">Your chronicle is empty — <b>save your first snapshot</b> below to start the line.</div>';return;}
+  if(list.length===1){area.innerHTML=`<div class="empty-chart">One snapshot at <b>${fmt(list[0].net)}</b>. Save another snapshot and the history begins to take shape.</div>`;return;}
+  const w=900,h=300,padX=36,padY=34,values=list.map(e=>e.net);
+  let min=Math.min(...values,0),max=Math.max(...values,0); if(min===max){min-=10;max+=10;}
+  const pad=(max-min)*0.14||10; min-=pad; max+=pad;
+  const n=list.length,xStep=(w-2*padX)/(n-1),yOf=v=>h-padY-((v-min)/(max-min))*(h-2*padY);
+  const pts=list.map((e,i)=>({x:padX+i*xStep,y:yOf(e.net),date:e.date,net:e.net}));
+  function smoothPath(p){let d=`M${p[0].x.toFixed(1)},${p[0].y.toFixed(1)}`;for(let i=0;i<p.length-1;i++){const p0=p[i-1]||p[i],p1=p[i],p2=p[i+1],p3=p[i+2]||p2,cp1x=p1.x+(p2.x-p0.x)/6,cp1y=p1.y+(p2.y-p0.y)/6,cp2x=p2.x-(p3.x-p1.x)/6,cp2y=p2.y-(p3.y-p1.y)/6;d+=` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;}return d;}
+  const linePath=smoothPath(pts),zeroY=yOf(0).toFixed(1);
+  const gridLines=[0.25,0.5,0.75].map(f=>{const y=(padY+f*(h-2*padY)).toFixed(1);return `<line class="grid-h" x1="${padX}" y1="${y}" x2="${w-padX}" y2="${y}"/>`;}).join('');
+  const peak=list.reduce((a,b)=>b.net>a.net?b:a,list[0]),trough=list.reduce((a,b)=>b.net<a.net?b:a,list[0]),last=pts[pts.length-1],peakPt=pts[list.indexOf(peak)],troughPt=pts[list.indexOf(trough)];
+  let markers='';
+  if(peak!==list[list.length-1]) markers+=`<circle class="marker-dot" cx="${peakPt.x}" cy="${peakPt.y}" r="3.5"/><text class="swing-label peak" x="${peakPt.x}" y="${peakPt.y-10}" text-anchor="middle">High · ${formatDate(peak.date,true)}</text>`;
+  if(trough!==list[list.length-1]&&trough!==peak) markers+=`<circle class="marker-dot" cx="${troughPt.x}" cy="${troughPt.y}" r="3.5"/><text class="swing-label trough" x="${troughPt.x}" y="${troughPt.y+18}" text-anchor="middle">Low · ${formatDate(trough.date,true)}</text>`;
+  area.innerHTML=`<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${gridLines}<line class="zero-line" x1="${padX}" y1="${zeroY}" x2="${w-padX}" y2="${zeroY}"/><path class="ink-glow" d="${linePath}"/><path class="ink-line" d="${linePath}"/>${markers}<circle class="current-dot-pulse" cx="${last.x}" cy="${last.y}" r="5"/><circle class="current-dot" cx="${last.x}" cy="${last.y}" r="4"/></svg>`;
 }
 
 function renderLog(){
-  const body = document.getElementById('logBody');
-  const rev = [...entries].reverse();
-  body.innerHTML = rev.map((e,i)=>{
-    const idxInSorted = entries.length-1-i;
-    const prev = idxInSorted>0 ? entries[idxInSorted-1].amount : null;
-    let deltaHtml = '<span style="color:var(--text-faint)">—</span>';
-    if(prev !== null){
-      const d = e.amount - prev;
-      const cls = d>0?'up':(d<0?'down':'');
-      deltaHtml = `<span class="delta ${cls}">${d>0?'+':''}${fmt(d)}</span>`;
-    }
-    return `<tr>
-      <td>${formatDate(e.date)}</td>
-      <td>${fmt(e.amount)}</td>
-      <td>${deltaHtml}</td>
-      <td><button class="row-remove" onclick="deleteEntry('${e.date}')">Remove</button></td>
-    </tr>`;
-  }).join('');
+  const body=document.getElementById('logBody'),rev=[...entries].reverse();
+  body.innerHTML=rev.map((e,i)=>{const idx=entries.length-1-i,prev=idx>0?entries[idx-1]:null;let delta='<span style="color:var(--text-faint)">—</span>';if(prev){const d=e.net-prev.net,cls=d>0?'up':(d<0?'down':'');delta=`<span class="delta ${cls}">${d>0?'+':''}${fmt(d)}</span>`;}return `<tr><td>${formatDate(e.date)}</td><td>${fmt(e.freeCash)}</td><td>${fmt(e.debt)}</td><td>${fmt(e.net)}</td><td>${delta}</td><td>${editUnlocked?`<button class="row-remove" onclick="deleteEntry('${e.date}')">Remove</button>`:''}</td></tr>`;}).join('');
 }
 
 function trendNote(){
-  if(entries.length===0) return '';
-  if(entries.length===1) return 'First mark on the page. It starts here.';
-  const last = entries[entries.length-1].amount;
-  const prev = entries[entries.length-2].amount;
-  const diff = last - prev;
-  if(diff > 0) return `Up ${fmt(Math.abs(diff))} from last time.`;
-  if(diff < 0) return `Down ${fmt(Math.abs(diff))} from last time — part of the shape of things.`;
-  return 'Holding steady since last time.';
+  if(entries.length===0)return '';
+  if(entries.length===1)return 'First mark on the page. The history starts here.';
+  const last=entries[entries.length-1],prev=entries[entries.length-2],diff=last.net-prev.net;
+  if(diff>0)return `Up ${fmt(Math.abs(diff))} from the previous snapshot.`;
+  if(diff<0)return `Down ${fmt(Math.abs(diff))} from the previous snapshot.`;
+  return 'Holding steady since the previous snapshot.';
+}
+
+function updateNetPreview(){
+  const free=safeNum(document.getElementById('entryFreeCash').value),debt=safeNum(document.getElementById('entryDebt').value),net=free-debt,el=document.getElementById('netPreview');
+  el.textContent=fmt(net); el.className='net-preview'+(net<0?' negative':'');
 }
 
 function render(){
-  const list = filteredEntries();
-  const last = entries[entries.length-1];
-  const balEl = document.getElementById('currentBalance');
-  const asOfEl = document.getElementById('currentAsOf');
-  const trendEl = document.getElementById('trendNote');
-  if(last){
-    balEl.textContent = fmt(last.amount);
-    balEl.className = 'balance-figure' + (last.amount<0 ? ' negative' : '');
-    asOfEl.textContent = 'as of ' + formatDate(last.date);
-    trendEl.textContent = trendNote();
-  }else{
-    balEl.textContent = '—';
-    balEl.className = 'balance-figure';
-    asOfEl.textContent = 'nothing logged yet';
-    trendEl.textContent = '';
-  }
-  renderChart(list);
-  renderStats(list);
-  renderLog();
+  const list=filteredEntries(),last=entries[entries.length-1];
+  const balEl=document.getElementById('currentBalance'),asOfEl=document.getElementById('currentAsOf'),trendEl=document.getElementById('trendNote');
+  renderMiniMetrics();
+  if(last){balEl.textContent=fmt(last.net);balEl.className='balance-figure'+(last.net<0?' negative':'');asOfEl.textContent='as of '+formatDate(last.date);trendEl.textContent=trendNote();}
+  else{balEl.textContent='—';balEl.className='balance-figure';asOfEl.textContent='nothing logged yet';trendEl.textContent='';}
+  renderChart(list);renderStats(list);renderLog();updateNetPreview();renderLock();
 }
 
-document.getElementById('entryForm').addEventListener('submit', (e)=>{
+document.getElementById('entryForm').addEventListener('submit',(e)=>{
   e.preventDefault();
-  const date = document.getElementById('entryDate').value;
-  const amount = parseFloat(document.getElementById('entryAmount').value);
-  if(!date || isNaN(amount)) return;
-  upsertEntry(date, amount);
-  document.getElementById('entryAmount').value = '';
+  if(!editUnlocked) return;
+  const date=document.getElementById('entryDate').value,free=safeNum(document.getElementById('entryFreeCash').value),debt=safeNum(document.getElementById('entryDebt').value);
+  if(!date) return;
+  upsertEntry(date,free,debt);
+  document.getElementById('entryFreeCash').value='';document.getElementById('entryDebt').value='0';
 });
 
-document.getElementById('rangeTabs').addEventListener('click', (e)=>{
-  const btn = e.target.closest('button');
-  if(!btn) return;
-  currentRange = btn.dataset.range;
-  [...document.querySelectorAll('.range-tabs button')].forEach(b=>b.classList.toggle('active', b===btn));
-  render();
+document.getElementById('entryForm').addEventListener('input',(e)=>{if(e.target.id==='entryFreeCash'||e.target.id==='entryDebt')updateNetPreview();});
+document.getElementById('rangeTabs').addEventListener('click',(e)=>{const btn=e.target.closest('button');if(!btn)return;currentRange=btn.dataset.range;[...document.querySelectorAll('.range-tabs button')].forEach(b=>b.classList.toggle('active',b===btn));render();});
+document.getElementById('currencyInput').addEventListener('change',(e)=>saveCurrency(e.target.value.trim()));
+document.getElementById('entryDate').valueAsDate=new Date();
+
+(async function init(){
+  await loadLock();
+  await loadCurrency();
+  await loadEntries();
+})();
+
+window.addEventListener('beforeunload',()=>{
+  try{ localSet(STORAGE_KEY,JSON.stringify(entries)); localSet(CURRENCY_KEY,currencySymbol); }
+  catch(e){}
 });
-
-document.getElementById('currencyInput').addEventListener('change', (e)=>{
-  saveCurrency(e.target.value.trim());
-});
-
-document.getElementById('entryDate').valueAsDate = new Date();
-
-loadCurrency();
-loadEntries();
 </script>
 </body>
 </html>
